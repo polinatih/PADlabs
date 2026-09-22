@@ -1,28 +1,3 @@
-"""
-Grabber v3 для сбора статей Wikipedia про Marvel Cinematic Universe.
-
-ЧТО ИСПРАВЛЕНО ПО СРАВНЕНИЮ С v2:
-
-1. Фильтр по категориям был слишком широким (слово "film" встречается
-   почти везде в мире кино, даже в статьях про награды). Теперь фильтр
-   ищет ТОЧНЫЕ шаблоны категорий, которые Wikipedia использует
-   систематически:
-     - у статьи о фильме почти всегда есть категория вида "2019 films"
-     - у статьи об актёре/актрисе почти всегда есть категория вида
-       "1990 births" (год рождения)
-     - у статьи о телесериале — категория вида "American television
-       series debuts" или "20xx American television series"
-     - у статьи о вымышленном персонаже — категория, содержащая
-       "fictional characters" или "comics characters"
-
-2. Wikipedia иногда отвечает ошибкой 429 (слишком много запросов).
-   Теперь при такой ошибке скрипт не сдаётся, а ждёт немного и
-   повторяет запрос (до 4 попыток, с увеличивающейся паузой).
-
-Запуск:
-    pip install requests
-    python wiki_grabber_v3.py
-"""
 
 import requests
 import json
@@ -32,23 +7,16 @@ import re
 import os
 from datetime import datetime, timezone
 
-# ======================= CONFIG =======================
 
 LANG = "en"
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data", "raw")
-REQUEST_DELAY_SEC = 0.5          # базовая пауза между запросами
-MAX_RETRIES = 4                  # сколько раз повторять запрос при ошибке
+REQUEST_DELAY_SEC = 0.5          
+MAX_RETRIES = 4                 
 MAX_LINKS_PER_HUB = 300
 
-# Хабы + regex-шаблоны категорий, по которым определяем "это наша тема".
-# re.search ищет шаблон в каждой категории статьи (без учёта регистра).
 HUBS = [
     {
         "page": "List of Marvel Cinematic Universe films",
-        # Настоящие MCU-фильмы почти всегда явно помечены категорией,
-        # содержащей "Marvel Cinematic Universe" (например "Marvel
-        # Cinematic Universe: Phase One films"). Старые фильмы про тех же
-        # персонажей от других студий (Sony, Fox) такой категории не имеют.
         "category_patterns": [r"marvel cinematic universe"],
         "tag": "film",
     },
@@ -59,10 +27,6 @@ HUBS = [
     },
     {
         "page": "List of Marvel Cinematic Universe film actors",
-        # Здесь фильтр по году рождения оправдан: сама страница-хаб уже
-        # заранее содержит только реальных актёров MCU, дополнительная
-        # проверка нужна только чтобы отсечь случайные не-биографические
-        # ссылки (например, названия студий).
         "category_patterns": [r"\b(19|20)\d{2}\s+births\b"],
         "tag": "actor",
     },
@@ -79,14 +43,8 @@ HEADERS = {
 }
 
 
-# ======================= WIKIPEDIA API =======================
-
 def api_get(params: dict):
-    """
-    Обёртка над запросом к API.
-    При ошибке 429 (слишком много запросов) ждёт и повторяет запрос,
-    вместо того чтобы сразу сдаваться.
-    """
+
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             resp = requests.get(API_URL, params=params, headers=HEADERS, timeout=15)
@@ -102,7 +60,7 @@ def api_get(params: dict):
 
         except requests.RequestException as e:
             print(f"  [ошибка запроса] {e} (попытка {attempt}/{MAX_RETRIES})")
-            time.sleep(2 * attempt)  # увеличивающаяся пауза: 2с, 4с, 6с...
+            time.sleep(2 * attempt) 
 
     print("  [ошибка] не удалось получить ответ после всех попыток, пропускаю")
     return None
@@ -163,7 +121,6 @@ def get_categories(title: str):
 
 
 def matches_patterns(categories, patterns):
-    """Проверяет, подходит ли хотя бы одна категория под хотя бы один regex-шаблон."""
     cats_text = " | ".join(categories).lower()
     return any(re.search(p, cats_text) for p in patterns)
 
@@ -187,8 +144,6 @@ def get_article_text(title: str):
             return text
     return None
 
-
-# ======================= СОХРАНЕНИЕ =======================
 
 def safe_filename(title: str) -> str:
     name = re.sub(r"[^\w\-]+", "_", title).strip("_")
@@ -231,8 +186,6 @@ def save_article(title: str, tag: str, text: str) -> str:
     return status
 
 
-# ======================= ОСНОВНОЙ ЦИКЛ =======================
-
 def run():
     stats = {"new": 0, "updated": 0, "unchanged": 0, "skipped_filtered": 0, "skipped_no_text": 0}
     seen_titles = set()
@@ -269,7 +222,6 @@ def run():
             stats[status] += 1
             print(f"    [{status}] ({tag}) {title}")
 
-    print("\n===== Готово =====")
     print(f"Новых: {stats['new']}")
     print(f"Обновлено: {stats['updated']}")
     print(f"Без изменений: {stats['unchanged']}")
