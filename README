@@ -1,0 +1,6 @@
+===== Готово =====
+fixed          :  7965 chunks, средняя длина 489 символов -> data/processed/fixed.jsonl
+fixed_overlap  :  9841 chunks, средняя длина 490 символов -> data/processed/fixed_overlap.jsonl
+paragraph      :  3551 chunks, средняя длина 1097 символов -> data/processed/paragraph.jsonl
+headers        :  2787 chunks, средняя длина 1365 символов -> data/processed/headers.jsonl
+PS C:\Users\Polina\Desktop\pad\src\preprocessing> 
