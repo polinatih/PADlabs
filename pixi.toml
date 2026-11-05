@@ -1,0 +1,33 @@
+# Черновик окружения для лабы №1 (RAG по MCU).
+# Если `pixi init` сгенерирует файл с секцией [project] вместо [workspace] -
+# это нормально, зависит от версии Pixi; секции зависимостей и задач те же.
+
+[workspace]
+name = "lab1-rag"
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64", "osx-arm64"]
+
+[dependencies]
+python = "3.12.*"
+requests = "*"
+
+# Пакеты из PyPI (Pixi ставит их через uv)
+[pypi-dependencies]
+sentence-transformers = "*"   # embeddings + cross-encoder reranker
+chromadb = "*"                # vector store
+groq = "*"                    # LLM через бесплатный API Groq
+streamlit = "*"               # UI
+langfuse = "*"                # трассировка pipeline
+
+# Окружение для тестов: не попадает в основное
+[feature.dev.dependencies]
+pytest = "*"
+
+[environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+
+[tasks]
+grab = "python src/grabber/wiki_grabber.py"
+preprocess = "python src/preprocessing/preprocess.py"
+ui = "streamlit run src/ui/app.py"
